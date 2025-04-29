@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advertisement Management</title>
+    <style>
+        body {
+            background-color: #333;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .ad-preview {
+            width: 240px;
+            height: 120px;  /* Reduced from 240px to 120px */
+            border: 2px solid #fff;
+            margin: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .ad-form {
+            margin: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-width: 400px;
+            height: 120px;  /* Added to match preview height */
+            overflow-y: auto;  /* Added for scrolling if content is too long */
+        }
+        .ad-input {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="ad-form">
+        <h2>Add Advertisement</h2>
+        <form action="{{ url_for('save_ad') }}" method="POST">
+            <input type="text" name="title" placeholder="Ad Title" class="ad-input" required>
+            <textarea name="content" placeholder="Ad Content" class="ad-input" required></textarea>
+            <select name="position" class="ad-input" required aria-label="Advertisement Position"></select>
+                <option value="left">Left Side</option>
+                <option value="right">Right Side</option>
+            </select>
+            <button type="submit">Save Advertisement</button>
+        </form>
+    </div>
+</body>
+</html>

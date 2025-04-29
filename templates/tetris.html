@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #2c003e, #4a0080, #2c003e);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            padding-top: 0px;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .game-header {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-family: Arial, sans-serif;
+            margin-bottom: 0px;
+        }
+        .game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .tetris-board {
+            border: 2px solid #fff;
+            background-color: #000;
+            border-radius: 12px;
+        }
+        .score-board {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+        }
+        .score-board h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #FF6B6B, #FF4757);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-family: Arial, sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .back-button:hover {
+            background: linear-gradient(135deg, #FF4757, #FF6B6B);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        .ad-space {
+            width: 160px;
+            height: 260px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('home') }}" class="back-button">← Back to Home</a>
+    <div class="game-wrapper">
+        <h1 class="game-header">Tetris Game</h1>
+        <div class="game-container">
+            <div class="ad-space">
+                Advertisement Space Left
+            </div>
+            <div class="game-content">
+                <canvas id="tetris" class="tetris-board" width="240" height="400"></canvas>
+                <div class="score-board">
+                    <h2>Score: <span id="score">0</span></h2>
+                </div>
+            </div>
+            <div class="ad-space">
+                Advertisement Space Right
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const grid = 20;
+        const scoreElement = document.getElementById('score');
+        let score = 0;
+
+        // Tetris pieces with their shapes and colors
+        const pieces = [
+            { shape: [[1, 1, 1, 1]], color: '#00f0f0' },  // I
+            { shape: [[1, 1], [1, 1]], color: '#f0f000' }, // O
+            { shape: [[0, 1, 0], [1, 1, 1]], color: '#a000f0' }, // T
+            { shape: [[0, 1, 1], [1, 1, 0]], color: '#00f000' }, // S
+            { shape: [[1, 1, 0], [0, 1, 1]], color: '#f00000' }, // Z
+            { shape: [[1, 0, 0], [1, 1, 1]], color: '#0000f0' }, // J
+            { shape: [[0, 0, 1], [1, 1, 1]], color: '#f0a000' }  // L
+        ];
+
+        let board = Array(20).fill().map(() => Array(12).fill(0));
+        let currentPiece = null;
+        let currentPosition = { x: 0, y: 0 };
+
+        function createPiece() {
+            const piece = pieces[Math.floor(Math.random() * pieces.length)];
+            currentPiece = {
+                shape: piece.shape,
+                color: piece.color,
+                x: Math.floor(board[0].length / 2) - Math.floor(piece.shape[0].length / 2),
+                y: 0
+            };
+        }
+
+        function draw() {
+            context.fillStyle = '#000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw board
+            board.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        context.fillStyle = value;
+                        context.fillRect(x * grid, y * grid, grid - 1, grid - 1);
+                    }
+                });
+            });
+
+            // Draw current piece
+            if (currentPiece) {
+                context.fillStyle = currentPiece.color;
+                currentPiece.shape.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value) {
+                            context.fillRect(
+                                (currentPiece.x + x) * grid,
+                                (currentPiece.y + y) * grid,
+                                grid - 1,
+                                grid - 1
+                            );
+                        }
+                    });
+                });
+            }
+        }
+
+        function collision() {
+            return currentPiece.shape.some((row, y) => {
+                return row.some((value, x) => {
+                    if (!value) return false;
+                    const newX = currentPiece.x + x;
+                    const newY = currentPiece.y + y;
+                    return (
+                        newX < 0 ||
+                        newX >= board[0].length ||
+                        newY >= board.length ||
+                        board[newY][newX]
+                    );
+                });
+            });
+        }
+
+        function merge() {
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        board[currentPiece.y + y][currentPiece.x + x] = currentPiece.color;
+                    }
+                });
+            });
+        }
+
+        function rotate() {
+            const rotated = currentPiece.shape[0].map((_, i) =>
+                currentPiece.shape.map(row => row[i]).reverse()
+            );
+            const previousShape = currentPiece.shape;
+            currentPiece.shape = rotated;
+            if (collision()) {
+                currentPiece.shape = previousShape;
+            }
+        }
+
+        function clearLines() {
+            let linesCleared = 0;
+            outer: for (let y = board.length - 1; y >= 0; y--) {
+                for (let x = 0; x < board[y].length; x++) {
+                    if (!board[y][x]) continue outer;
+                }
+                board.splice(y, 1);
+                board.unshift(Array(12).fill(0));
+                linesCleared++;
+                y++;
+            }
+            if (linesCleared) {
+                score += linesCleared * 100;
+                scoreElement.textContent = score;
+            }
+        }
+
+        function drop() {
+            currentPiece.y++;
+            if (collision()) {
+                currentPiece.y--;
+                merge();
+                clearLines();
+                createPiece();
+                if (collision()) {
+                    board = Array(20).fill().map(() => Array(12).fill(0));
+                    score = 0;
+                    scoreElement.textContent = score;
+                }
+            }
+        }
+
+        let consecutiveDownPresses = 0;
+        let lastKeyPressTime = 0;
+
+        document.addEventListener('keydown', event => {
+            const currentTime = Date.now();
+            
+            switch (event.keyCode) {
+                case 37: // Left
+                    currentPiece.x--;
+                    if (collision()) currentPiece.x++;
+                    break;
+                case 39: // Right
+                    currentPiece.x++;
+                    if (collision()) currentPiece.x--;
+                    break;
+                case 40: // Down
+                    if (currentTime - lastKeyPressTime < 200) {
+                        consecutiveDownPresses++;
+                        if (consecutiveDownPresses >= 2) {
+                            while (!collision()) {
+                                currentPiece.y++;
+                            }
+                            currentPiece.y--;
+                            drop();
+                        }
+                    } else {
+                        consecutiveDownPresses = 1;
+                        drop();
+                    }
+                    lastKeyPressTime = currentTime;
+                    break;
+                case 38: // Up
+                    rotate();
+                    break;
+            }
+            draw();
+        });
+    
+        // Remove space key handler and update the interval
+        setInterval(() => {
+            drop();
+            draw();
+        }, 1000);
+
+        createPiece();
+        setInterval(() => {
+            drop();
+            draw();
+        }, 1000);
+
+        draw();
+    </script>
+</body>
+</html>

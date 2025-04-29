@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Card Game</title>
+    <style>
+        body {
+            background: linear-gradient(45deg, #2c5282, #3182ce, #2c5282);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            padding-top: 20px;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+        .game-header {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .memory-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            width: 300px;
+            height: 300px;
+            box-sizing: border-box;
+        }
+        .card {
+            width: 60px;
+            height: 60px;
+            background: #4CAF50;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            transform-style: preserve-3d;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+            background: #fff;
+            border: 2px solid #4CAF50;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #9B59B6, #8E44AD);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-family: Arial, sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .back-button:hover {
+            background: linear-gradient(135deg, #8E44AD, #9B59B6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.4);
+        }
+        .score-panel {
+            position: absolute;
+            top: 0px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: left;
+            font-size: 14px;
+        }
+        .score-panel div {
+            margin: 0px 0;
+        }
+        .celebration-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: popIn 0.5s ease-out;
+        }
+
+        .celebration-content {
+            position: relative;
+        }
+
+        .celebration-title {
+            color: #4CAF50;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .celebration-text {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .celebration-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .celebration-button:hover {
+            background: #45a049;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: gold;
+            border-radius: 50%;
+            animation: sparkle 1s infinite;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes sparkle {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('home') }}" class="back-button">← Back to Home</a>
+    <div class="game-wrapper">
+        <h1 class="game-header">Memory Card Game</h1>
+        <div class="game-container">
+            <div class="ad-space">
+                Advertisement Space Left
+            </div>
+            <div class="game-content">
+                <div class="memory-board" id="gameBoard"></div>
+                <div class="score-panel">
+                    <div>Moves: <span id="moveCount">0</span></div>
+                    <div>Pairs Found: <span id="pairsFound">0</span></div>
+                </div>
+            </div>
+            <div class="ad-space">
+                Advertisement Space Right
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this before closing body tag -->
+    <div id="celebrationPopup" class="celebration-container">
+        <div class="celebration-content">
+            <h2 class="celebration-title">🎉 Congratulations! 🎉</h2>
+            <p class="celebration-text">You won in <span id="finalMoves">0</span> moves!</p>
+            <button class="celebration-button" onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const emojis = ['🎮', '🎲', '🎯', '🎪', '🎨', '🎭', '🍔', '⚾'];
+        let cards = [...emojis, ...emojis];
+        let flippedCards = [];
+        let moveCount = 0;
+        let pairsFound = 0;
+        
+        function shuffleCards(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            shuffleCards(cards).forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.value = emoji;
+                card.dataset.index = index;
+                card.addEventListener('click', flipCard);
+                board.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (flippedCards.length === 2) return;
+            if (this.classList.contains('flipped')) return;
+
+            this.classList.add('flipped');
+            this.textContent = this.dataset.value;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                moveCount++;
+                document.getElementById('moveCount').textContent = moveCount;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.value === card2.dataset.value) {
+                pairsFound++;
+                document.getElementById('pairsFound').textContent = pairsFound;
+                flippedCards = [];
+                if (pairsFound === emojis.length) {
+                    setTimeout(showCelebration, 500);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.textContent = '';
+                    card2.textContent = '';
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        function showCelebration() {
+            const popup = document.getElementById('celebrationPopup');
+            document.getElementById('finalMoves').textContent = moveCount;
+            popup.style.display = 'block';
+            
+            // Create sparkles
+            for (let i = 0; i < 20; i++) {
+                createSparkle();
+            }
+        }
+
+        function createSparkle() {
+            const content = document.querySelector('.celebration-content');
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            
+            // Random position around the content
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 100 + Math.random() * 50;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            
+            sparkle.style.left = `calc(50% + ${x}px)`;
+            sparkle.style.top = `calc(50% + ${y}px)`;
+            
+            content.appendChild(sparkle);
+            
+            // Remove sparkle after animation
+            setTimeout(() => sparkle.remove(), 1000);
+        }
+
+        function resetGame() {
+            const popup = document.getElementById('celebrationPopup');
+            popup.style.display = 'none';
+            moveCount = 0;
+            pairsFound = 0;
+            flippedCards = [];
+            document.getElementById('moveCount').textContent = moveCount;
+            document.getElementById('pairsFound').textContent = pairsFound;
+            createBoard();
+        }
+
+        // Initialize game
+        createBoard();
+    </script>
+</body>
+</html>
